@@ -6,7 +6,7 @@ import time,sys
 from colorama import Fore, Back, Style
 
 # Function to type text with a blinking cursor
-def type(text, cursor_speed=0.05, cursor_char=' '):
+def type(text, cursor_speed=0.01, cursor_char=' '):
     for char in text:
         sys.stdout.write(char )
         sys.stdout.flush()
@@ -46,7 +46,7 @@ def create_dataset1():
     # Create the DataFrame
     df = pd.DataFrame(data)
     # Calculate the percentage of disk usage used
-    total_available_disk = 600  # MB
+    total_available_disk = 1000  # MB
     df['disk_usage_percentage'] = (df['disk_usage_MB'] / total_available_disk) * 100
     return df
 
@@ -86,10 +86,10 @@ def create_dataset2():
 
 
 # Function to monitor disk usage
-def monitor_disk_usage(dataframe, threshold):
-    total_available_disk = 600  # MB
+def monitor_disk_usage(dataframe, threshold,total_available_disk):
+    # total_available_disk = 600  # MB
     for i in range(len(dataframe)):
-        if dataframe['disk_usage_percentage'][i] >= threshold:
+        if dataframe['disk_usage_percentage'][i] > threshold:
             end_index = i
             start_index = max(0, end_index - 6 * 60)
             
@@ -97,16 +97,12 @@ def monitor_disk_usage(dataframe, threshold):
             end_disk_usage = dataframe['disk_usage_MB'][end_index]
             rate_of_increase = (end_disk_usage - start_disk_usage) / 360.0  # 6 hours in minutes
             
-            output_text = f"Event details: \033[1;31m High severity event, "
-            output_text += f"\033[0m  Disk usage at {threshold}%, {round(end_disk_usage, 2)} MB of {total_available_disk} MB Used,"
+            output_text = f"Event details: \033[1;31m Disk usage High severity event,"
+            output_text += f"\033[0m  threshold at {threshold}%, Usage at {round(dataframe['disk_usage_percentage'][i],2)}%, {round(end_disk_usage, 2)} MB of {total_available_disk} MB Used,"
             remaining_capacity = total_available_disk - end_disk_usage
-            output_text += f" Remaining Capacity: {round(remaining_capacity, 2)} MB\n"
+            output_text += f" {round(remaining_capacity, 2)} MB free\n"
             type(output_text)
             time.sleep(3)
-            output_text=""
-            output_text += "Calculating disk usage increase rate in last 6 hours . . . . . . . \n"
-            type(output_text)
-            time.sleep(5)
 
             # Create and display the graph
             plt.figure(figsize=(8, 4))
@@ -123,17 +119,25 @@ def monitor_disk_usage(dataframe, threshold):
             plt.xticks(hourly_labels, rotation=0)
             plt.show()
 
+            output_text=""
+            output_text += "Calculating disk usage increase rate in last 6 hours . . . . . . . \n"
+            type(output_text,cursor_speed=0.03)
+            # time.sleep(5)
+
             output_text = f"   Average increase rate: {rate_of_increase:.2f} MB/min\n"
+            type(output_text, cursor_speed=0.03)
+            time.sleep(5)
             time_to_full_capacity = remaining_capacity / rate_of_increase
-            output_text += f"   Time to reach 100%: {pd.to_timedelta(np.round(time_to_full_capacity, 0), unit='m')} if the current rate sustains\n"
-            type(output_text)
+            output_text = f"   Time to reach 100%: {pd.to_timedelta(np.round(time_to_full_capacity, 0), unit='m')} if the current rate sustains\n"
+            type(output_text, cursor_speed=0.03)
+            time.sleep(5)
             
             if time_to_full_capacity > 1000:
-                output_text = f"This is not a real high severity event, as the disk is not going to fill up any time soon.\nSuggestion: Adjust thresholds to avoid furter false positive alerts.\n"
+                output_text = f"Assessement: This is not a real high severity event, as the disk is not going to fill up any time soon.\nSuggestion: Adjust thresholds to avoid furter false positive alerts.\n"
             else :
-                output_text = f"You should treat this Event as critical, and notify customer immediately. \nSuggestion: Troubleshoot database, identify root cause for disk increase. Look at wal size, db size, log size\n"
+                output_text = f"Assessement: This Event is critical. \nSuggestions: 1. Notify customer immediately. 2. Do Root Cause Analysis.\n"
             type(output_text)
-            time.sleep(30)
+            time.sleep(5)
             break
 
 
@@ -145,16 +149,21 @@ def main():
     event_id = int(input(""))
     if event_id == 10051:
         df = create_dataset1()
+        monitor_threshold = 55
+        total_available_disk = 1000 #MB
+        monitor_disk_usage(df, monitor_threshold,total_available_disk)
 
     elif event_id == 10052:
         df = create_dataset2()
+        monitor_threshold = 90
+        total_available_disk = 600 #MB
+        monitor_disk_usage(df, monitor_threshold,total_available_disk)
     
     else : 
         print(f"The event was not found") 
         quit()
 
-    monitor_threshold = 90
-    monitor_disk_usage(df, monitor_threshold)
+    
 
 if __name__ == "__main__":
     main()
