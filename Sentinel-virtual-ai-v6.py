@@ -6,14 +6,14 @@ from sklearn.ensemble import IsolationForest
 import time
 import sys
 
-def type(text, cursor_speed=0.05, cursor_char='_'):
+def type(text, cursor_speed=0.01, cursor_char=' '):
     for char in text:
-        sys.stdout.write(char + cursor_char)  # Print the character and the cursor
+        sys.stdout.write(char )
         sys.stdout.flush()
-        time.sleep(cursor_speed)  # Control the typing speed
-        sys.stdout.write('\b \b')  # Move the cursor back
+        time.sleep(cursor_speed)
+        # sys.stdout.write('\b \b')  # Move the cursor back and erase the cursor
         sys.stdout.flush()
-        time.sleep(cursor_speed)  # Control the blinking speed
+        time.sleep(cursor_speed)
 
     # sys.stdout.write("\n")  # Add a newline character at the end
 
